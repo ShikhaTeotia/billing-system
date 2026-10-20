@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing System with Discount</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Theme: change these colors to restyle everything ---------- */
+  :root {
+    --bg: #eef0f6;
+    --card: #ffffff;
+    --ink: #151a30;
+    --muted: #6b7190;
+    --line: #e2e5f0;
+    --brand: #4338ca;
+    --brand-soft: #e8e6fb;
+    --good: #0e9f6e;
+    --good-soft: #dcf5ea;
+    --danger: #d92d20;
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+  /* ---------- Header ---------- */
+  header {
+    background: linear-gradient(120deg, #1e1b4b, #4338ca);
+    color: #fff; padding: 28px 20px 84px;
+  }
+  .bar { max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .logo { width: 46px; height: 46px; border-radius: 12px; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 1.4rem; }
+  h1 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+  .tagline { margin: 0; opacity: .8; font-size: .9rem; }
+  .meta { text-align: right; font-size: .85rem; opacity: .9; }
+  .meta b { display: block; font-size: 1rem; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1080px; margin: -56px auto 48px; padding: 0 20px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px -14px rgba(21,26,48,.28); }
+  .card h2 { margin: 0 0 4px; font-size: 1.1rem; }
+  .card .lead { margin: 0 0 18px; color: var(--muted); font-size: .9rem; }
+
+  /* ---------- Product cards ---------- */
+  .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .product { border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; background: #fff; transition: border-color .15s, transform .15s; }
+  .product:hover { border-color: var(--brand); transform: translateY(-2px); }
+  .icon { width: 52px; height: 52px; border-radius: 14px; background: var(--brand-soft); display: grid; place-items: center; font-size: 1.6rem; margin-bottom: 8px; }
+  .pname { font-weight: 700; }
+  .pprice { color: var(--muted); font-size: .9rem; margin-bottom: 10px; }
+  .add { margin-top: auto; padding: 9px; border: 0; border-radius: 9px; background: var(--brand); color: #fff; font-weight: 700; }
+  .add:hover { background: #3730a3; }
+  .add:active { transform: scale(.97); }
+
+  /* ---------- Bill ---------- */
+  .bill { position: sticky; top: 16px; }
+  .field { width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; font: inherit; color: var(--ink); margin-bottom: 14px; }
+  .field::placeholder { color: #a0a5bf; }
+  .lines { min-height: 70px; }
+  .empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: .92rem; }
+  .line { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .lname { font-weight: 600; }
+  .lunit { color: var(--muted); font-size: .8rem; }
+  .stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .stepper button { width: 28px; height: 28px; border: 0; background: var(--bg); font-weight: 700; color: var(--ink); }
+  .stepper button:hover { background: var(--brand-soft); }
+  .stepper span { min-width: 30px; text-align: center; font-weight: 700; font-size: .9rem; }
+  .lamt { font-weight: 700; min-width: 92px; text-align: right; }
+
+  /* discount progress */
+  .perk { background: var(--good-soft); border-radius: 12px; padding: 12px 14px; margin: 16px 0 6px; font-size: .88rem; color: #065f46; }
+  .track { height: 8px; background: #bfe9d6; border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .fill { height: 100%; width: 0; background: var(--good); border-radius: 99px; transition: width .4s ease; }
+
+  .sums { margin-top: 12px; }
+  .sum { display: flex; justify-content: space-between; padding: 4px 0; color: var(--muted); font-size: .92rem; }
+  .sum.off span:last-child { color: var(--good); font-weight: 700; }
+  .grand { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 14px; border-top: 2px dashed var(--line); font-weight: 800; }
+  .grand span:last-child { font-size: 1.7rem; color: var(--brand); letter-spacing: -0.02em; }
+  .actions { display: flex; gap: 10px; margin-top: 18px; }
+  .actions button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; }
+  .print { border: 0; background: var(--ink); color: #fff; }
+  .clear { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+  .clear:hover { border-color: var(--danger); color: var(--danger); }
+  .print:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ---------- Print: show only the bill ---------- */
+  @media print {
+    header, .products-card, .actions { display: none; }
+    body { background: #fff; }
+    main { margin: 0; display: block; }
+    .card { box-shadow: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <div class="logo">₹</div>
+      <div>
+        <h1>Billing System</h1>
+        <p class="tagline">Smart discounts, GST included</p>
+      </div>
+    </div>
+    <div class="meta"><b id="billNo"></b><span id="billDate"></span></div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: products -->
+  <section class="card products-card">
+    <h2>Products</h2>
+    <p class="lead">Tap Add to put an item on the bill.</p>
+    <div class="products" id="products"></div>
+  </section>
+
+  <!-- RIGHT: bill -->
+  <section class="card bill" aria-live="polite">
+    <h2>Current bill</h2>
+    <p class="lead">Adjust quantities right here.</p>
+    <input class="field" id="customer" type="text" placeholder="Customer name (optional)" maxlength="40">
+    <div class="lines" id="lines"></div>
+    <div id="perk"></div>
+    <div class="sums" id="sums"></div>
+    <div class="actions">
+      <button class="clear" id="clearBtn">Clear</button>
+      <button class="print" id="printBtn">Print bill</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ---------- Data (same products and rates as the C version) ----------
+  const PRODUCTS = [
+    { name: "Laptop",    price: 50000, icon: "💻" },
+    { name: "Mouse",     price: 500,   icon: "🖱️" },
+    { name: "Keyboard",  price: 1000,  icon: "⌨️" },
+    { name: "Printer",   price: 8000,  icon: "🖨️" },
+    { name: "Pen Drive", price: 700,   icon: "💾" }
+  ];
+  // Lowest first, so we can also find the "next" tier easily
+  const TIERS = [
+    { min: 10000,  rate: 5 },
+    { min: 20000,  rate: 10 },
+    { min: 50000,  rate: 15 },
+    { min: 100000, rate: 20 }
+  ];
+  const GST_RATE = 18;
+
+  let bill = []; // each entry: { index: productIndex, qty: number }
+
+  // ---------- Helpers ----------
+  const $ = id => document.getElementById(id);
+  const money = n => "Rs. " + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // ---------- Bill number and date ----------
+  $("billNo").textContent = "Bill #INV-" + Math.floor(1000 + Math.random() * 9000);
+  $("billDate").textContent = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+  // ---------- Draw the product cards ----------
+  $("products").innerHTML = PRODUCTS.map((p, i) => `
+    <div class="product">
+      <div class="icon">${p.icon}</div>
+      <div class="pname">${p.name}</div>
+      <div class="pprice">Rs. ${p.price.toLocaleString("en-IN")}</div>
+      <button class="add" data-add="${i}" aria-label="Add ${p.name} to bill">Add</button>
+    </div>`).join("");
+
+  // ---------- Click handling ----------
+  $("products").addEventListener("click", e => {
+    const btn = e.target.closest("[data-add]");
+    if (!btn) return;
+    const index = Number(btn.dataset.add);
+    const found = bill.find(item => item.index === index);
+    if (found) found.qty++; else bill.push({ index, qty: 1 });
+    render();
+  });
+
+  $("lines").addEventListener("click", e => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    if (btn.dataset.act === "plus") bill[i].qty++;
+    if (btn.dataset.act === "minus") { bill[i].qty--; if (bill[i].qty <= 0) bill.splice(i, 1); }
+    render();
+  });
+
+  $("clearBtn").addEventListener("click", () => { bill = []; render(); });
+  $("printBtn").addEventListener("click", () => window.print());
+
+  // ---------- Calculation (same order as the C code) ----------
+  function currentTier(total) {
+    let tier = null;
+    for (const t of TIERS) if (total >= t.min) tier = t;
+    return tier;
+  }
+
+  // ---------- Draw the bill ----------
+  function render() {
+    $("printBtn").disabled = bill.length === 0;
+
+    if (bill.length === 0) {
+      $("lines").innerHTML = '<p class="empty">Your bill is empty.<br>Add a product to get started.</p>';
+      $("perk").innerHTML = "";
+      $("sums").innerHTML = "";
+      return;
+    }
+
+    let total = 0;
+    $("lines").innerHTML = bill.map((item, i) => {
+      const p = PRODUCTS[item.index];
+      const amount = p.price * item.qty;
+      total += amount;
+      return `
+        <div class="line">
+          <div><div class="lname">${p.name}</div><div class="lunit">Rs. ${p.price.toLocaleString("en-IN")} each</div></div>
+          <div class="stepper">
+            <button data-act="minus" data-i="${i}" aria-label="Decrease ${p.name}">−</button>
+            <span>${item.qty}</span>
+            <button data-act="plus" data-i="${i}" aria-label="Increase ${p.name}">+</button>
+          </div>
+          <div class="lamt">${money(amount)}</div>
+        </div>`;
+    }).join("");
+
+    const tier = currentTier(total);
+    const rate = tier ? tier.rate : 0;
+    const discount = total * rate / 100;
+    const net = total - discount;
+    const gst = net * GST_RATE / 100;
+    const grand = net + gst;
+
+    // Progress bar toward the next discount tier
+    const next = TIERS.find(t => t.min > total);
+    if (next) {
+      const from = tier ? tier.min : 0;
+      const pct = Math.min(100, ((total - from) / (next.min - from)) * 100);
+      $("perk").innerHTML = `<div class="perk">Add <b>${money(next.min - total)}</b> more to unlock <b>${next.rate}% off</b>
+        <div class="track"><div class="fill" style="width:${pct}%"></div></div></div>`;
+    } else {
+      $("perk").innerHTML = '<div class="perk"><b>Maximum discount unlocked: 20% off</b></div>';
+    }
+
+    const name = $("customer").value.trim();
+    $("sums").innerHTML = `
+      ${name ? `<div class="sum"><span>Billed to</span><span>${name.replace(/</g, "&lt;")}</span></div>` : ""}
+      <div class="sum"><span>Total amount</span><span>${money(total)}</span></div>
+      <div class="sum off"><span>Discount (${rate}%)</span><span>− ${money(discount)}</span></div>
+      <div class="sum"><span>After discount</span><span>${money(net)}</span></div>
+      <div class="sum"><span>GST (${GST_RATE}%)</span><span>${money(gst)}</span></div>
+      <div class="grand"><span>Grand total</span><span>${money(grand)}</span></div>`;
+  }
+
+  $("customer").addEventListener("input", render);
+  render();
+</script>
+</body>
+</html>
